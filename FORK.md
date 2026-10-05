@@ -1,0 +1,35 @@
+# Fork notes
+
+This is a thin fork of
+[include-what-you-use](https://github.com/include-what-you-use/include-what-you-use)
+that carries a small set of patches on top of an upstream release branch. The
+patches are required for IWYU to run effectively on the Redpanda codebase
+(seastar, coroutine-heavy C++23, Boost.Test, and a Bazel build with ~300 header
+search paths). Without them some files take more than 10 minutes, or never
+finish.
+
+The patches are kept as discrete commits so they can be rebased onto new
+upstream branches and dropped once equivalent fixes land upstream.
+
+## Base
+
+Upstream `clang_23` (IWYU 0.27, for Clang 23).
+
+## Patches
+
+- **Avoid repeated template specialization traversal** (plus its test):
+  cherry-picked from upstream PR
+  [#2129](https://github.com/include-what-you-use/include-what-you-use/pull/2129),
+  which fixes the exponential traversal of nested alias templates reported in
+  [#2131](https://github.com/include-what-you-use/include-what-you-use/issues/2131).
+  On `group_mirroring_task.cc`: more than 600s before, 25s after.
+
+- **Cache quoted-include lookups in FileTransitivelyIncludes**: on every symbol
+  use, IWYU converted every file in the translation unit to its quoted include
+  name, which costs a `stat()` and a linear scan of all header search paths
+  each time. Boost.Test assertion macros generate many symbol uses, so those
+  files were hit hardest. This patch memoizes the conversion and indexes files
+  by quoted name. A synthetic test with 400 `BOOST_REQUIRE_EQUAL` calls goes
+  from 191.7s to 3.7s (`clang -fsyntax-only` takes 1.6s). Not yet filed upstream.
+
+Output matched stock IWYU on every file compared.
