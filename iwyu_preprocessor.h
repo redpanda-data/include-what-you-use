@@ -323,6 +323,11 @@ class IwyuPreprocessorInfo : public clang::PPCallbacks,
   map<clang::OptionalFileEntryRef, set<clang::OptionalFileEntryRef>>
       transitive_include_map_;
 
+  // Quoted include name -> first file in transitive_include_map_ with that
+  // name. Built lazily by FileTransitivelyIncludes(quoted_includer, ...).
+  mutable map<string, clang::OptionalFileEntryRef> quoted_transitive_includers_;
+  mutable bool quoted_transitive_includers_built_ = false;
+
   // Maps from a FileEntry to the quoted names of files that its file
   // is directed *not* to include via the "no_include" pragma.
   map<clang::OptionalFileEntryRef, set<string>> no_include_map_;

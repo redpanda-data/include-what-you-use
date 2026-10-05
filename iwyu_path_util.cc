@@ -11,6 +11,7 @@
 
 #include <cstring>                      // for strlen
 #include <system_error>
+#include <unordered_map>
 
 #include "iwyu_port.h"
 #include "iwyu_string_util.h"
@@ -40,9 +41,18 @@ const char* source_extensions[] = {
   ".cp"
 };
 
+// ConvertToQuotedInclude is called per (symbol use x file in the TU) by
+// IwyuPreprocessorInfo::FileTransitivelyIncludes, and each call walks every
+// header search path, so its results are memoized.
+std::unordered_map<string, string>& QuotedIncludeCache() {
+  static auto* cache = new std::unordered_map<string, string>();
+  return *cache;
+}
+
 }  // anonymous namespace
 
 void SetHeaderSearchPaths(const vector<HeaderSearchPath>& search_paths) {
+  QuotedIncludeCache().clear();
   if (header_search_paths != nullptr) {
     delete header_search_paths;
   }
@@ -178,6 +188,9 @@ bool StripPathPrefix(string* path, StringRef prefix_path) {
 
 // Converts a file-path, such as /usr/include/stdio.h, to a
 // quoted include, such as <stdio.h>.
+static string ConvertToQuotedIncludeUncached(StringRef filepath,
+                                             StringRef includer_path);
+
 string ConvertToQuotedInclude(StringRef filepath,
                               StringRef includer_path) {
   CHECK_(!IsQuotedInclude(filepath));
@@ -187,6 +200,21 @@ string ConvertToQuotedInclude(StringRef filepath,
   if (IsSpecialFilenameOrStdin(filepath))
     return filepath.str();
 
+  string key;
+  key.reserve(filepath.size() + 1 + includer_path.size());
+  key.append(filepath.data(), filepath.size());
+  key.push_back('\0');
+  key.append(includer_path.data(), includer_path.size());
+  auto& cache = QuotedIncludeCache();
+  if (auto it = cache.find(key); it != cache.end())
+    return it->second;
+  string result = ConvertToQuotedIncludeUncached(filepath, includer_path);
+  cache.emplace(std::move(key), result);
+  return result;
+}
+
+static string ConvertToQuotedIncludeUncached(StringRef filepath,
+                                             StringRef includer_path) {
   // Get path into same format as header search paths: Absolute and normalized.
   string path = NormalizeFilePath(MakeAbsolutePath(filepath));
 

@@ -1155,11 +1155,17 @@ bool IwyuPreprocessorInfo::FileTransitivelyIncludes(
 
 bool IwyuPreprocessorInfo::FileTransitivelyIncludes(
     const string& quoted_includer, OptionalFileEntryRef includee) const {
-  for (const auto& entry : transitive_include_map_) {
-    if (ConvertToQuotedInclude(GetFilePath(entry.first)) == quoted_includer)
-      return ContainsKey(entry.second, includee);
+  if (!quoted_transitive_includers_built_) {
+    for (const auto& entry : transitive_include_map_) {
+      quoted_transitive_includers_.emplace(
+          ConvertToQuotedInclude(GetFilePath(entry.first)), entry.first);
+    }
+    quoted_transitive_includers_built_ = true;
   }
-  return false;
+  auto it = quoted_transitive_includers_.find(quoted_includer);
+  if (it == quoted_transitive_includers_.end())
+    return false;
+  return FileTransitivelyIncludes(it->second, includee);
 }
 
 bool IwyuPreprocessorInfo::IncludeIsInhibited(
