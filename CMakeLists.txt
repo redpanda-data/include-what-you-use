@@ -135,6 +135,7 @@ endif()
 set(LLVM_LINK_COMPONENTS
   Option
   Support
+  TargetParser
   AllTargetsAsmParsers
   AllTargetsDescs
   AllTargetsInfos
