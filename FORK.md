@@ -32,4 +32,17 @@ Upstream `clang_23` (IWYU 0.27, for Clang 23).
   by quoted name. A synthetic test with 400 `BOOST_REQUIRE_EQUAL` calls goes
   from 191.7s to 3.7s (`clang -fsyntax-only` takes 1.6s). Not yet filed upstream.
 
-Output matched stock IWYU on every file compared.
+- **Report args held by specializations fully used in templates** (plus its
+  test): inside a template instantiation, a cast to `Box<T>*` or a member
+  access through one needs `Box<T>` complete, and so `T` when `Box<T>` holds
+  it by value. IWYU did not report `T`, so it suggested forward-declaring a
+  type the code needs complete, which fails to compile. Seastar's
+  `lw_shared_ptr<T>` hits this on every access. Fixes upstream
+  [#2136](https://github.com/include-what-you-use/include-what-you-use/issues/2136).
+
+- **Link the TargetParser component directly**: build fix so IWYU links
+  against an LLVM built with `BUILD_SHARED_LIBS=ON`, where
+  `getDefaultTargetTriple()` no longer arrives transitively.
+
+Except for the #2136 fix, which adds the includes it requires, output matched
+stock IWYU on every file compared.
