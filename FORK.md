@@ -50,7 +50,8 @@ Upstream `clang_23` (IWYU 0.27, for Clang 23).
   declarations change with the macro, like `<picojson.h>` with
   `PICOJSON_USE_INT64`, stays mapped as a whole. Also fixes upstream
   [#1370](https://github.com/include-what-you-use/include-what-you-use/issues/1370).
-  Not yet filed upstream.
+  Upstream PR
+  [#2139](https://github.com/include-what-you-use/include-what-you-use/pull/2139).
 
 - **Link the TargetParser component directly**: build fix so IWYU links
   against an LLVM built with `BUILD_SHARED_LIBS=ON`, where
