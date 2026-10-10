@@ -1961,8 +1961,8 @@ bool IncludePicker::IncluderMacrosChangeDeclarations(
                 GetInstantiationLoc(decl->getBeginLoc());
             if (GetFileEntry(begin) != file)
               continue;
-            if (isa<NamespaceDecl, LinkageSpecDecl>(decl)) {
-              visit(cast<DeclContext>(decl));
+            if (llvm::isa<NamespaceDecl, LinkageSpecDecl>(decl)) {
+              visit(llvm::cast<DeclContext>(decl));
               continue;
             }
             const int first_line = GetLineNumber(begin);
