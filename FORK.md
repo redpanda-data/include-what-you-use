@@ -53,5 +53,15 @@ Upstream `clang_23` (IWYU 0.27, for Clang 23).
   Upstream PR
   [#2139](https://github.com/include-what-you-use/include-what-you-use/pull/2139).
 
+- **Treat any enclosing destructor as a method body** (plus its test): a
+  member's destructor instantiated from the enclosing class's implicit
+  destructor reported uses of its template argument outside a method body,
+  so a nested class used that way (for example `absl::FixedArray<Nested>` or
+  `std::variant<Nested>`) got the invalid suggestion `struct Outer::Nested;`.
+  Fixes the reduced case on upstream
+  [#1707](https://github.com/include-what-you-use/include-what-you-use/issues/1707).
+  Upstream PR
+  [#2142](https://github.com/include-what-you-use/include-what-you-use/pull/2142).
+
 Except for the #2136 fix, which adds the includes it requires, output matched
 stock IWYU on every file compared.
