@@ -82,5 +82,14 @@ Upstream `clang_23` (IWYU 0.27, for Clang 23).
   definition up only by its own name, so it was told to forward-declare the
   type, or to include itself.
 
+- **Don't count a pack expansion as one template argument** (plus its
+  test): a specialization written with a pack expansion, like
+  `absl::flat_hash_map<Args...>` in a partial specialization, was taken to
+  use the default arguments of every parameter after the first, and IWYU
+  aborted with "There should be a redecl specifying the default arg" when a
+  parameter had none. Upstream issue
+  [#2148](https://github.com/include-what-you-use/include-what-you-use/issues/2148),
+  PR [#2149](https://github.com/include-what-you-use/include-what-you-use/pull/2149).
+
 Except for the #2136 fix, which adds the includes it requires, output matched
 stock IWYU on every file compared.
