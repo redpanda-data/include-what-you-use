@@ -63,5 +63,14 @@ Upstream `clang_23` (IWYU 0.27, for Clang 23).
   Upstream PR
   [#2142](https://github.com/include-what-you-use/include-what-you-use/pull/2142).
 
+- **Report the object type of an unresolved member call** (plus its test): a
+  call to a member template with dependent template arguments in a template,
+  such as `cache.local().with_node_client<proto_t>(...)` or
+  `vlog(kwire.debug, ...)`, did not count as a full use of the object's type,
+  so IWYU replaced the object's header with a forward declaration that does
+  not compile. Upstream issue
+  [#2146](https://github.com/include-what-you-use/include-what-you-use/issues/2146),
+  PR [#2147](https://github.com/include-what-you-use/include-what-you-use/pull/2147).
+
 Except for the #2136 fix, which adds the includes it requires, output matched
 stock IWYU on every file compared.
