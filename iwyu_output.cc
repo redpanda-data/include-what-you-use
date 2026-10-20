@@ -1332,11 +1332,13 @@ void ProcessForwardDeclare(OneUse* use,
   }
 
   // (A7) If any arbitrary redeclaration is marked with IWYU pragma: export,
-  // reset use to this decl to keep its containing file included.
+  // reset use to this decl to keep its containing file included.  A
+  // redeclaration in the file of the use itself needs no include.
   if (!use->is_full_use()) {
     for (const Decl* redecl : use->decl()->redecls()) {
       const auto* decl = cast<NamedDecl>(redecl);
-      if (preprocessor_info->ForwardDeclareIsExported(decl)) {
+      if (preprocessor_info->ForwardDeclareIsExported(decl) &&
+          GetFileEntry(decl) != GetFileEntry(use->use_loc())) {
         use->reset_decl(decl);
         use->set_suggested_header(ConvertToQuotedInclude(
             GetFilePath(decl->getLocation()),
