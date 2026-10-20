@@ -273,6 +273,7 @@ using clang::TypedefNameDecl;
 using clang::TypedefType;
 using clang::UnaryExprOrTypeTraitExpr;
 using clang::UnresolvedLookupExpr;
+using clang::UnresolvedMemberExpr;
 using clang::UnresolvedSet;
 using clang::UserDefinedLiteral;
 using clang::UsingDecl;
@@ -2042,6 +2043,27 @@ class IwyuBaseAstVisitor : public BaseAstVisitor<Derived> {
     // is responsible for and what we're responsible for.
     ReportTypeUse(CurrentLoc(), base_type, DerefKind::RemoveRefsAndPtr);
     // The class of 'this' is already being analyzed.
+    if (!isa<CXXThisExpr>(base_expr))
+      ReportTplSpecFullUse(base_type);
+    return true;
+  }
+
+  // A call to a member template with dependent template arguments, such as
+  // 'c.f<T>()' or 'c.f(t)' in a template, stays an UnresolvedMemberExpr until
+  // instantiation, even when the type of 'c' is already known. The member
+  // access needs that type complete, as for a MemberExpr.
+  bool VisitUnresolvedMemberExpr(UnresolvedMemberExpr* expr) {
+    if (CanIgnoreCurrentASTNode())
+      return true;
+    // An implicit 'this->' access is on the class being analyzed.
+    if (expr->isImplicitAccess())
+      return true;
+
+    const Expr* base_expr = expr->getBase()->IgnoreParenImpCasts();
+    const Type* base_type = GetTypeOf(base_expr);
+    if (base_type == nullptr || base_type->isDependentType())
+      return true;
+    ReportTypeUse(CurrentLoc(), base_type, DerefKind::RemoveRefsAndPtr);
     if (!isa<CXXThisExpr>(base_expr))
       ReportTplSpecFullUse(base_type);
     return true;
