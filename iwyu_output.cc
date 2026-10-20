@@ -1657,7 +1657,8 @@ void ProcessSymbolUse(OneUse* use,
 void CalculateIwyuForForwardDeclareUse(
     OneUse* use, const set<string>& actual_includes,
     const set<string>& desired_includes,
-    const set<OptionalFileEntryRef>& associated_includes) {
+    const set<OptionalFileEntryRef>& associated_includes,
+    const string& use_quoted_include) {
   CHECK_(!use->ignore_use() && "Trying to calculate on an ignored use");
   CHECK_(use->decl() && "CalculateIwyuForForwardDeclareUse takes a fwd-decl");
   CHECK_(!use->is_full_use() && "ForwardDeclareUse are not full uses");
@@ -1701,6 +1702,18 @@ void CalculateIwyuForForwardDeclareUse(
     vector<string> headers = GlobalIncludePicker().GetMappedPublicHeaders(
         dfn, GetFilePath(use->use_loc()), GetFilePath(dfn));
     for (const string& header : headers) {
+      // The use is in the public header the definition maps to, which
+      // provides it by including the definition's own (private) header.
+      if (header == use_quoted_include) {
+        const string own_header = ConvertToQuotedInclude(GetFilePath(dfn));
+        if (ContainsKey(desired_includes, own_header)) {
+          dfn_from_desired_includes = dfn;
+          desired_hdr_with_dfn = own_header;
+        }
+        if (ContainsKey(actual_includes, own_header))
+          dfn_from_actual_includes = dfn;
+        continue;
+      }
       if (ContainsKey(desired_includes, header)) {
         dfn_from_desired_includes = dfn;
         desired_hdr_with_dfn = header;
@@ -1923,7 +1936,7 @@ void IwyuFileInfo::CalculateIwyuViolations(vector<OneUse>* uses) {
     } else if (!use.is_full_use()) {
       internal::CalculateIwyuForForwardDeclareUse(
           &use, effective_direct_includes, effective_desired_includes,
-          AssociatedFileEntries());
+          AssociatedFileEntries(), quoted_file_);
     } else {
       internal::CalculateIwyuForFullUse(
           &use, effective_direct_includes, quoted_file_);
