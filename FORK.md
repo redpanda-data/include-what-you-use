@@ -72,5 +72,15 @@ Upstream `clang_23` (IWYU 0.27, for Clang 23).
   [#2146](https://github.com/include-what-you-use/include-what-you-use/issues/2146),
   PR [#2147](https://github.com/include-what-you-use/include-what-you-use/pull/2147).
 
+- **Don't point a forward-declare use at an export in its own file** (plus
+  its test): a header that exports a forward declaration and then uses it,
+  like a `fwd.h` with `begin_exports`, was told to include itself.
+
+- **Find a definition in the public header the use is in** (plus its test):
+  a public header that provides a definition by exporting its private
+  header, like `base/outcome.h` for its outcome headers, looked the
+  definition up only by its own name, so it was told to forward-declare the
+  type, or to include itself.
+
 Except for the #2136 fix, which adds the includes it requires, output matched
 stock IWYU on every file compared.
