@@ -1571,6 +1571,24 @@ unsigned GetTplParamNumberWithoutPack(const TemplateDecl* tpl) {
   return params->hasParameterPack() ? size - 1 : size;
 }
 
+std::optional<unsigned> GetNumWrittenTplArgs(ArrayRef<TemplateArgument> args) {
+  unsigned num = 0;
+  for (const TemplateArgument& arg : args) {
+    if (arg.isPackExpansion())
+      return std::nullopt;
+    if (arg.getKind() != TemplateArgument::Pack) {
+      ++num;
+      continue;
+    }
+    const std::optional<unsigned> in_pack =
+        GetNumWrittenTplArgs(arg.pack_elements());
+    if (!in_pack)
+      return std::nullopt;
+    num += *in_pack;
+  }
+  return num;
+}
+
 bool IsStdNonProvidingTypedef(const TypedefNameDecl* decl) {
   string name = GetWrittenQualifiedNameAsString(decl, /*with_fn_args=*/false);
   // clang-format off

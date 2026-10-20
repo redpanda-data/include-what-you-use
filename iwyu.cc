@@ -5753,12 +5753,14 @@ class IwyuAstConsumer
     }
 
     if (!InImplicitCode(current_ast_node())) {
-      size_t num_written_args = type->template_arguments().size();
-      if (num_written_args < GetTplParamNumberWithoutPack(tpl)) {
+      const std::optional<unsigned> num_written_args =
+          GetNumWrittenTplArgs(type->template_arguments());
+      if (num_written_args &&
+          *num_written_args < GetTplParamNumberWithoutPack(tpl)) {
         // If the type as-written makes use of default arguments, select exactly
         // that redeclaration which specifies the first default argument used.
         ReportDeclForwardDeclareUse(
-            CurrentLoc(), GetRedeclSpecifyingDefArg(num_written_args, tpl));
+            CurrentLoc(), GetRedeclSpecifyingDefArg(*num_written_args, tpl));
       } else if (can_fwd_decl || type->isTypeAlias()) {
         // TODO: instead of GetIndependentRedecl call, figure out how to print
         // a fwd-decl without default arguments if there isn't any.
